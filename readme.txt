@@ -28,3 +28,24 @@ Card Muse is a cozy and clever AI-powered greeting card creator that helps you c
 📂 Folder Structure
 ------------------
 
+card-generator/ 
+├── app.py # Main Streamlit interface 
+├── image_generator.py # Sends prompt to ComfyUI + waits for exact match 
+├── metadata_extractor.py # Extracts context + fallback image prompts 
+├── model_router.py # Routes LLM calls (Claude + Phi) 
+├── config.py # Contains Anthropic API key 
+├── inside_generator.py # (In progress) PIL-based text rendering 
+├── cardmuse_one.json # Your Flux workflow for generation └── output/ # Where ComfyUI saves image outputs
+
+
+🚀 Getting Started
+------------------
+
+1. Clone the repo  
+2. Install dependencies  
+3. Add your `config.py` with `ANTHROPIC_API_KEY`  
+4. Run ComfyUI with `cardmuse_one.json` loaded  
+5. Start the app:
+   ```bash
+   streamlit run app.py
+   
