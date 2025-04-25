@@ -1,6 +1,7 @@
 
 import streamlit as st
 import requests
+import time
 from image_generator import generate_card_image
 from model_router import call_chat_model
 from metadata_extractor import extract_metadata_from_llm
@@ -9,14 +10,8 @@ st.set_page_config(page_title="Card Muse", layout="centered")
 st.title("Card Muse")
 st.markdown("<div style='text-align:center; font-size:1.4rem; color:#a06c5a;'><i>Your poetic paper muse 💌</i></div>", unsafe_allow_html=True)
 
-# --- Init ---
 if "chat" not in st.session_state:
-    st.session_state.chat = [
-        {
-            "role": "assistant",
-            "content": "Hello dear! I’d love to help you design the perfect card. What’s the occasion we’re celebrating or comforting?"
-        }
-    ]
+    st.session_state.chat = [{"role": "assistant", "content": "Hello dear! I’d love to help you design the perfect card. What’s the occasion we’re celebrating or comforting?"}]
 if "metadata" not in st.session_state:
     st.session_state.metadata = {}
 if "image_prompt_ready" not in st.session_state:
@@ -31,8 +26,9 @@ if "image_prompt_suggestion" not in st.session_state:
     st.session_state.image_prompt_suggestion = ""
 if "wants_inside" not in st.session_state:
     st.session_state.wants_inside = None
+if "used_seeds" not in st.session_state:
+    st.session_state.used_seeds = set()
 
-# --- Chat UI ---
 for msg in st.session_state.chat:
     st.chat_message(msg["role"]).markdown(msg["content"])
 
@@ -41,7 +37,6 @@ if user_input:
     st.session_state.chat.append({"role": "user", "content": user_input})
     reply = call_chat_model(st.session_state.chat)
     st.session_state.chat.append({"role": "assistant", "content": reply})
-
     metadata = extract_metadata_from_llm(st.session_state.chat)
     st.session_state.metadata.update(metadata)
 
@@ -69,17 +64,17 @@ if st.session_state.image_prompt_ready and not st.session_state.image_generated:
 
     if st.button("🎨 Yes, generate this image"):
         st.markdown("### One moment while I paint something lovely...")
-        with st.spinner("Rendering your card... This usually takes 1–2 minutes."):
-            image_path, error = generate_card_image(st.session_state.image_prompt)
+        with st.spinner("Rendering your card... This may take 2+ minutes."):
+            image_path, seed, error = generate_card_image(st.session_state.image_prompt, st.session_state.used_seeds)
             if image_path:
                 st.image(image_path, caption="Card Cover", use_container_width=True)
                 st.session_state.image_generated = True
                 st.session_state.image_path = image_path
+                st.session_state.used_seeds.add(seed)
             else:
                 st.warning(error or "No image generated.")
         st.rerun()
 
-# --- Inside Message Decision ---
 if st.session_state.image_generated and st.session_state.wants_inside is None:
     st.markdown("Would you like to add a personal message inside the card?")
     if st.button("Yes, help me write one"):
